@@ -40,7 +40,7 @@ local CoreGui = cloneref(game:GetService("CoreGui"))
 
 local OverlayGui = Instance.new("ScreenGui")
 if GetHiddenUI then
-    OverlayGui.Parent = GetHiddenUI
+    OverlayGui.Parent = GetHiddenUI()
 else
     OverlayGui.Parent = CoreGui
 end
