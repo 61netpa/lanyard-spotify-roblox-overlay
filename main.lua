@@ -1,3 +1,24 @@
+if not getgenv().SpotifyOverlay then
+    getgenv().SpotifyOverlay = {
+        Enabled = true,
+        DiscordID = 0,
+        UI = {
+            BorderColor = Color3.fromRGB(0, 0, 0),
+            BorderThickness = 2,
+            BorderTransparency = 0,
+            BackgroundColor = Color3.fromRGB(0, 0, 0),
+            BackgroundTransparency = 0.5,
+            SongNameColor = Color3.fromRGB(255, 255, 255),
+            SongNameFont = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+            ArtistNameColor = Color3.fromRGB(255, 255, 255),
+            ArtistNameFont = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+            BarBackgroundColor = Color3.fromRGB(128, 128, 128),
+            BarColor = Color3.fromRGB(192, 192, 192)
+        },
+        Connections = {}
+    }
+end
+
 if getgenv().SpotifyOverlayRunning then
     return
 end
