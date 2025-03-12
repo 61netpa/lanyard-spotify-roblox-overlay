@@ -74,7 +74,7 @@ getgenv().SpotifyOverlay = {
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/61netpa/lanyard-spotify-roblox-overlay/refs/heads/main/main.lua"))()
 ```
-⚠ You **MUST** keep the UI table in the script while executing it, otherwise it will cause an arror and break the script. This means you can **NOT** do something like this:
+⚠ You **MUST** keep the UI table in the configuration while executing it, otherwise it will cause an error and break the script. This means you can **NOT** do something like this:
 ```lua
 getgenv().SpotifyOverlay = {
     Enabled = true,
