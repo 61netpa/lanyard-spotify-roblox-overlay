@@ -16,9 +16,9 @@ getgenv().SpotifyOverlay = {
         BackgroundColor = Color3.fromRGB(0, 0, 0),
         BackgroundTransparency = 0.5,
         SongNameColor = Color3.fromRGB(255, 255, 255),
-        SongNameFont = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+        SongNameFont = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
         ArtistNameColor = Color3.fromRGB(255, 255, 255),
-        ArtistNameFont = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+        ArtistNameFont = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
         BarBackgroundColor = Color3.fromRGB(128, 128, 128),
         BarColor = Color3.fromRGB(192, 192, 192)
     },
@@ -36,9 +36,9 @@ getgenv().SpotifyOverlay = {
         BackgroundColor = Color3.fromRGB(4, 0, 45), --> Makes the background dark blue.
         BackgroundTransparency = 0, --> Removes the transparency from the background.
         SongNameColor = Color3.fromRGB(0, 255, 0), --> Makes the song name text green.
-        SongNameFont = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+        SongNameFont = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
         ArtistNameColor = Color3.fromRGB(129, 0, 0), --> Makes the artist name text dark red.
-        ArtistNameFont = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+        ArtistNameFont = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
         BarBackgroundColor = Color3.fromRGB(31, 31, 31), --> Makes the bar background dark gray.
         BarColor = Color3.fromRGB(255, 255, 255) --> Makes the bar white.
     },
@@ -64,9 +64,9 @@ getgenv().SpotifyOverlay = {
         BackgroundColor = Color3.fromRGB(0, 0, 0),
         BackgroundTransparency = 0.5,
         SongNameColor = Color3.fromRGB(255, 255, 255),
-        SongNameFont = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+        SongNameFont = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
         ArtistNameColor = Color3.fromRGB(255, 255, 255),
-        ArtistNameFont = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+        ArtistNameFont = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
         BarBackgroundColor = Color3.fromRGB(128, 128, 128),
         BarColor = Color3.fromRGB(192, 192, 192)
     },
@@ -74,17 +74,8 @@ getgenv().SpotifyOverlay = {
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/61netpa/lanyard-spotify-roblox-overlay/refs/heads/main/main.lua"))()
 ```
-⚠ You **MUST** keep the UI table in the configuration while executing it, otherwise it will cause an error and break the script. This means you can **NOT** do something like this:
-```lua
-getgenv().SpotifyOverlay = {
-    Enabled = true,
-    DiscordID = 643945264868098049
-}
-
-loadstring(game:HttpGet("https://raw.githubusercontent.com/61netpa/lanyard-spotify-roblox-overlay/refs/heads/main/main.lua"))()
-```
 ## Unloading
-To unload the script completely, just run this code:
+To unload the script completely, just run the following code:
 ```lua
 getgenv().SpotifyOverlay:End()
 ```
