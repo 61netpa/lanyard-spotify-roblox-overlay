@@ -9,9 +9,9 @@ if not getgenv().SpotifyOverlay then
             BackgroundColor = Color3.fromRGB(0, 0, 0),
             BackgroundTransparency = 0.5,
             SongNameColor = Color3.fromRGB(255, 255, 255),
-            SongNameFont = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Bold, Enum.FontStyle.Normal),
+            SongNameFont = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
             ArtistNameColor = Color3.fromRGB(255, 255, 255),
-            ArtistNameFont = Font.new([[rbxasset://fonts/families/Arial.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal),
+            ArtistNameFont = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
             BarBackgroundColor = Color3.fromRGB(128, 128, 128),
             BarColor = Color3.fromRGB(192, 192, 192)
         },
@@ -64,8 +64,9 @@ BackgroundCorner.CornerRadius = UDim.new(0, 8)
 
 local BackgroundBorder = Instance.new("UIStroke")
 BackgroundBorder.Parent = Background
+BackgroundBorder.Color = Color3.fromRGB(0, 0, 0)
 BackgroundBorder.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-BackgroundBorder.Thickness = UIConfig.BorderThickness
+BackgroundBorder.Thickness = 2
 
 local SongImage = Instance.new("ImageLabel")
 SongImage.Parent = Background
@@ -88,8 +89,8 @@ SongName.Text = "SongName"
 SongName.Size = UDim2.new(0.715, 0, 0.32, 0)
 SongName.Position = UDim2.new(0.26, 0, 0.12, 0)
 SongName.TextSize = 25
-SongName.TextColor3 = UIConfig.SongNameColor
-SongName.FontFace = UIConfig.SongNameFont
+SongName.TextColor3 = Color3.fromRGB(255, 255, 255)
+SongName.FontFace = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
 
 local SongNameTextScaler = Instance.new("UITextSizeConstraint")
 SongNameTextScaler.Parent = SongName
@@ -104,8 +105,8 @@ ArtistName.Text = "SongName"
 ArtistName.Size = UDim2.new(0.715, 0, 0.32, 0)
 ArtistName.Position = UDim2.new(0.26, 0, 0.35, 0)
 ArtistName.TextSize = 18
-ArtistName.TextColor3 = UIConfig.ArtistNameColor
-ArtistName.FontFace = UIConfig.ArtistName
+ArtistName.TextColor3 = Color3.fromRGB(255, 255, 255)
+ArtistName.FontFace = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
 
 local ArtistNameTextScaler = Instance.new("UITextSizeConstraint")
 ArtistNameTextScaler.Parent = ArtistName
@@ -114,7 +115,7 @@ ArtistNameTextScaler.MaxTextSize = 18
 local BarBackground = Instance.new("CanvasGroup")
 BarBackground.Parent = Background
 BarBackground.BorderSizePixel = 0
-BarBackground.BackgroundColor3 = UIConfig.BarBackgroundColor
+BarBackground.BackgroundColor3 = Color3.fromRGB(128, 128, 128)
 BarBackground.Size = UDim2.new(0.715, 0, 0.15, 0)
 BarBackground.Position = UDim2.new(0.26, 0, 0.73, 0)
 
@@ -127,7 +128,7 @@ Bar.Parent = BarBackground
 Bar.BorderSizePixel = 0
 Bar.Size = UDim2.new(0, 0, 1, 0)
 Bar.Position = UDim2.new(0, 0, 0, 0)
-Bar.BackgroundColor3 = UIConfig.BarColor
+Bar.BackgroundColor3 = Color3.fromRGB(192, 192, 192)
 
 local BarCorner = Instance.new("UICorner")
 BarCorner.Parent = Bar
@@ -174,15 +175,15 @@ task.spawn(function()
     while task.wait(1) do
         if getgenv().SpotifyOverlayRunning and getgenv().SpotifyOverlay then
             if Config.Enabled then
-                if UIConfig.BackgroundTransparency then Background.BackgroundTransparency = UIConfig.BackgroundTransparency end
-                if UIConfig.BackgroundColor then Background.BackgroundColor3 = UIConfig.BackgroundColor end
-                if UIConfig.BorderThickness then BackgroundBorder.Thickness = UIConfig.BorderThickness end
-                if UIConfig.SongNameColor then SongName.TextColor3 = UIConfig.SongNameColor end
-                if UIConfig.SongNameFont then SongName.FontFace = UIConfig.SongNameFont end
-                if UIConfig.ArtistNameColor then ArtistName.TextColor3 = UIConfig.ArtistNameColor end
-                if UIConfig.ArtistName then ArtistName.FontFace = UIConfig.ArtistName end
-                if UIConfig.BarBackgroundColor then BarBackground.BackgroundColor3 = UIConfig.BarBackgroundColor end
-                if UIConfig.BarColor then Bar.BackgroundColor3 = UIConfig.BarColor end
+                if UIConfig and UIConfig.BackgroundTransparency then Background.BackgroundTransparency = UIConfig.BackgroundTransparency end
+                if UIConfig and UIConfig.BackgroundColor then Background.BackgroundColor3 = UIConfig.BackgroundColor end
+                if UIConfig and UIConfig.BorderThickness then BackgroundBorder.Thickness = UIConfig.BorderThickness end
+                if UIConfig and UIConfig.SongNameColor then SongName.TextColor3 = UIConfig.SongNameColor end
+                if UIConfig and UIConfig.SongNameFont then SongName.FontFace = UIConfig.SongNameFont end
+                if UIConfig and UIConfig.ArtistNameColor then ArtistName.TextColor3 = UIConfig.ArtistNameColor end
+                if UIConfig and UIConfig.ArtistNameFont then ArtistName.FontFace = UIConfig.ArtistNameFont end
+                if UIConfig and UIConfig.BarBackgroundColor then BarBackground.BackgroundColor3 = UIConfig.BarBackgroundColor end
+                if UIConfig and UIConfig.BarColor then Bar.BackgroundColor3 = UIConfig.BarColor end
                 local success, data = pcall(function()
                     local get = game:HttpGet("https://api.lanyard.rest/v1/users/"..Config.DiscordID)
                     return HttpService:JSONDecode(get)
