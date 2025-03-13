@@ -173,16 +173,16 @@ end)
 task.spawn(function()
     while task.wait(1) do
         if getgenv().SpotifyOverlayRunning and getgenv().SpotifyOverlay then
-            if SpotifyOverlay.Enabled then
-                Background.BackgroundTransparency = UIConfig.BackgroundTransparency
-                Background.BackgroundColor3 = UIConfig.BackgroundColor
-                BackgroundBorder.Thickness = UIConfig.BorderThickness
-                SongName.TextColor3 = UIConfig.SongNameColor
-                SongName.FontFace = UIConfig.SongNameFont
-                ArtistName.TextColor3 = UIConfig.ArtistNameColor
-                ArtistName.FontFace = UIConfig.ArtistName
-                BarBackground.BackgroundColor3 = UIConfig.BarBackgroundColor
-                Bar.BackgroundColor3 = UIConfig.BarColor
+            if Config.Enabled then
+                if UIConfig.BackgroundTransparency then Background.BackgroundTransparency = UIConfig.BackgroundTransparency end
+                if UIConfig.BackgroundColor then Background.BackgroundColor3 = UIConfig.BackgroundColor end
+                if UIConfig.BorderThickness then BackgroundBorder.Thickness = UIConfig.BorderThickness end
+                if UIConfig.SongNameColor then SongName.TextColor3 = UIConfig.SongNameColor end
+                if UIConfig.SongNameFont then SongName.FontFace = UIConfig.SongNameFont end
+                if UIConfig.ArtistNameColor then ArtistName.TextColor3 = UIConfig.ArtistNameColor end
+                if UIConfig.ArtistName then ArtistName.FontFace = UIConfig.ArtistName end
+                if UIConfig.BarBackgroundColor then BarBackground.BackgroundColor3 = UIConfig.BarBackgroundColor end
+                if UIConfig.BarColor then Bar.BackgroundColor3 = UIConfig.BarColor end
                 local success, data = pcall(function()
                     local get = game:HttpGet("https://api.lanyard.rest/v1/users/"..Config.DiscordID)
                     return HttpService:JSONDecode(get)
@@ -203,13 +203,13 @@ task.spawn(function()
                         SongImage.Image = "rbxassetid://78980954752956"
                     end
                     local timestamps = {
-                        start = v["start"],
-                        ["end"] = v["end"]
+                        start = SpotifyResult.timestamps["start"],
+                        ["end"] = SpotifyResult.timestamps["end"]
                     }
                     local total = timestamps["end"] - timestamps.start
                     local progress = (DateTime.now().UnixTimestampMillis - timestamps.start) / total
                     local result = math.clamp(progress, 0, 1)
-                    TweenService:Create(CompletedProgressBar, TweenInfo.new(0.5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), { Size = UDim2.new(result, 0, 1, 0) }):Play()
+                    TweenService:Create(Bar, TweenInfo.new(0.5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), { Size = UDim2.fromScale(result, 1) }):Play()
                 elseif data.data and not data.data.listening_to_spotify and not data.data.spotify then
                     print("User is not listening to Spotify or Spotify activity is not visible on the profile")
                 else
