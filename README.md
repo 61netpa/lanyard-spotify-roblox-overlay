@@ -9,6 +9,7 @@ The default configuration is always:
 getgenv().SpotifyOverlay = {
     Enabled = true,
     DiscordID = 0,
+    Debug = false,
     UI = {
         BorderColor = Color3.fromRGB(0, 0, 0),
         BorderThickness = 2,
@@ -29,6 +30,7 @@ Here is an example of an configuration:
 getgenv().SpotifyOverlay = {
     Enabled = true,
     DiscordID = 757494097375264830, --> You HAVE to put your Discord ID in this variable.
+    Debug = true, --> Prints out the status, like it will show what it received from the API, etc. This WILL make it more detected.
     UI = {
         BorderColor = Color3.fromRGB(91, 0, 91), --> Makes the borders purplish.
         BorderThickness = 3, --> Makes the border more thick.
@@ -57,6 +59,7 @@ To execute the script, you have to run something like this example:
 getgenv().SpotifyOverlay = {
     Enabled = true,
     DiscordID = 643945264868098049,
+    Debug = false,
     UI = {
         BorderColor = Color3.fromRGB(0, 0, 0),
         BorderThickness = 2,
