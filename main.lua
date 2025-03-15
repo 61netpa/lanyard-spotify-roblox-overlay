@@ -2,6 +2,7 @@ if not getgenv().SpotifyOverlay then
     getgenv().SpotifyOverlay = {
         Enabled = true,
         DiscordID = 0,
+        Debug = false,
         UI = {
             BorderColor = Color3.fromRGB(0, 0, 0),
             BorderThickness = 2,
@@ -27,23 +28,20 @@ getgenv().SpotifyOverlayRunning = true
 local Config = getgenv().SpotifyOverlay
 local UIConfig = Config.UI
 local GetHiddenUI = get_hidden_gui or gethui
+local CloneReference = cloneref or function(Ins) return Ins end
 
 local DragToggle = nil
 local DragStart = nil
 local StartPos = nil
 local Connections = {}
 
-local UserInputService = cloneref(game:GetService("UserInputService"))
-local TweenService = cloneref(game:GetService("TweenService"))
-local HttpService = cloneref(game:GetService("HttpService"))
-local CoreGui = cloneref(game:GetService("CoreGui"))
+local UserInputService = CloneReference(game:GetService("UserInputService"))
+local TweenService = CloneReference(game:GetService("TweenService"))
+local HttpService = CloneReference(game:GetService("HttpService"))
+local CoreGui = CloneReference(game:GetService("CoreGui"))
 
 local OverlayGui = Instance.new("ScreenGui")
-if GetHiddenUI then
-    OverlayGui.Parent = GetHiddenUI()
-else
-    OverlayGui.Parent = CoreGui
-end
+OverlayGui.Parent = GetHiddenUI() or CoreGui
 OverlayGui.Enabled = true
 OverlayGui.ResetOnSpawn = false
 OverlayGui.IgnoreGuiInset = false
@@ -53,8 +51,8 @@ Background.Parent = OverlayGui
 Background.Visible = true
 Background.Active = true
 Background.BorderSizePixel = 0
-Background.BackgroundTransparency = UIConfig.BackgroundTransparency
-Background.BackgroundColor3 = UIConfig.BackgroundColor
+Background.BackgroundTransparency = 0.5
+Background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 Background.Size = UDim2.fromScale(0.209, 0.093)
 Background.Position = UDim2.fromScale(0.006, 0.011)
 
@@ -174,16 +172,18 @@ end)
 task.spawn(function()
     while task.wait(1) do
         if getgenv().SpotifyOverlayRunning and getgenv().SpotifyOverlay then
-            if Config.Enabled then
-                if UIConfig and UIConfig.BackgroundTransparency then Background.BackgroundTransparency = UIConfig.BackgroundTransparency end
-                if UIConfig and UIConfig.BackgroundColor then Background.BackgroundColor3 = UIConfig.BackgroundColor end
-                if UIConfig and UIConfig.BorderThickness then BackgroundBorder.Thickness = UIConfig.BorderThickness end
-                if UIConfig and UIConfig.SongNameColor then SongName.TextColor3 = UIConfig.SongNameColor end
-                if UIConfig and UIConfig.SongNameFont then SongName.FontFace = UIConfig.SongNameFont end
-                if UIConfig and UIConfig.ArtistNameColor then ArtistName.TextColor3 = UIConfig.ArtistNameColor end
-                if UIConfig and UIConfig.ArtistNameFont then ArtistName.FontFace = UIConfig.ArtistNameFont end
-                if UIConfig and UIConfig.BarBackgroundColor then BarBackground.BackgroundColor3 = UIConfig.BarBackgroundColor end
-                if UIConfig and UIConfig.BarColor then Bar.BackgroundColor3 = UIConfig.BarColor end
+            if Config.Enabled and Config.DiscordID then
+                if UIConfig then
+                    if UIConfig.BackgroundTransparency then Background.BackgroundTransparency = UIConfig.BackgroundTransparency end
+                    if UIConfig.BackgroundColor then Background.BackgroundColor3 = UIConfig.BackgroundColor end
+                    if UIConfig.BorderThickness then BackgroundBorder.Thickness = UIConfig.BorderThickness end
+                    if UIConfig.SongNameColor then SongName.TextColor3 = UIConfig.SongNameColor end
+                    if UIConfig.SongNameFont then SongName.FontFace = UIConfig.SongNameFont end
+                    if UIConfig.ArtistNameColor then ArtistName.TextColor3 = UIConfig.ArtistNameColor end
+                    if UIConfig.ArtistNameFont then ArtistName.FontFace = UIConfig.ArtistNameFont end
+                    if UIConfig.BarBackgroundColor then BarBackground.BackgroundColor3 = UIConfig.BarBackgroundColor end
+                    if UIConfig.BarColor then Bar.BackgroundColor3 = UIConfig.BarColor end
+                end
                 local success, data = pcall(function()
                     local get = game:HttpGet("https://api.lanyard.rest/v1/users/"..Config.DiscordID)
                     return HttpService:JSONDecode(get)
@@ -211,9 +211,9 @@ task.spawn(function()
                     local progress = (DateTime.now().UnixTimestampMillis - timestamps.start) / total
                     local result = math.clamp(progress, 0, 1)
                     TweenService:Create(Bar, TweenInfo.new(0.5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), { Size = UDim2.fromScale(result, 1) }):Play()
-                elseif data.data and not data.data.listening_to_spotify and not data.data.spotify then
+                elseif data.data and not data.data.listening_to_spotify and not data.data.spotify and Config.Debug then
                     print("User is not listening to Spotify or Spotify activity is not visible on the profile")
-                else
+                elseif Config.Debug then
                     print("API returned: ".. data)
                 end
             end
