@@ -1,224 +1,366 @@
-if not getgenv().SpotifyOverlay then
-    getgenv().SpotifyOverlay = {
-        Enabled = true,
-        DiscordID = 0,
-        Debug = false,
-        UI = {
-            BorderColor = Color3.fromRGB(0, 0, 0),
-            BorderThickness = 2,
-            BorderTransparency = 0,
-            BackgroundColor = Color3.fromRGB(0, 0, 0),
-            BackgroundTransparency = 0.5,
-            SongNameColor = Color3.fromRGB(255, 255, 255),
-            SongNameFont = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal),
-            ArtistNameColor = Color3.fromRGB(255, 255, 255),
-            ArtistNameFont = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal),
-            BarBackgroundColor = Color3.fromRGB(128, 128, 128),
-            BarColor = Color3.fromRGB(192, 192, 192)
-        },
-    }
+-- Environment
+
+local getgenv = getgenv or function() return _G; end
+local Websocket = getgenv().websocket or (getgenv().syn and getgenv().syn.websocket) or getgenv().Websocket or getgenv().WebSocket or function() end
+local GetHiddenUI = getgenv().get_hidden_gui or getgenv().gethui;
+local CloneReference = getgenv().cloneref or function(Instance: Instance) return Instance; end
+
+-- Services
+
+local GetService = game.GetService;
+
+local UserInputService = CloneReference(GetService(game, "UserInputService"));
+local TweenService = CloneReference(GetService(game, "TweenService"));
+local HttpService = CloneReference(GetService(game, "HttpService"));
+local Players = CloneReference(GetService(game, "Players"));
+local CoreGui = CloneReference(GetService(game, "CoreGui"));
+
+-- Variables
+
+local SpotifyOverlay = {
+	Enabled = true;
+	DefaultTheme = {
+		BorderColor = Color3.fromRGB(0, 0, 0);
+		BorderThickness = 2;
+		BorderTransparency = 0;
+		BackgroundColor = Color3.fromRGB(0, 0, 0);
+		BackgroundTransparency = 0.5;
+		SongNameColor = Color3.fromRGB(255, 255, 255);
+		SongNameFont = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+		ArtistNameColor = Color3.fromRGB(255, 255, 255);
+		ArtistNameFont = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+		BarBackgroundColor = Color3.fromRGB(128, 128, 128);
+		BarColor = Color3.fromRGB(192, 192, 192);
+	};
+	Functions = {};
+};
+local Functions = SpotifyOverlay.Functions;
+local LocalPlayer = Players.LocalPlayer;
+local PlayerGui = LocalPlayer.FindFirstChildOfClass(LocalPlayer, "PlayerGui");
+local Mouse = LocalPlayer.GetMouse(LocalPlayer);
+
+local GUI = Instance.new("ScreenGui");
+GUI.Name = "SpotifyOverlay";
+GUI.IgnoreGuiInset = false;
+GUI.ZIndexBehavior = Enum.ZIndexBehavior.Global;
+GUI.Parent = GetHiddenUI() or CoreGui or PlayerGui;
+GUI.ResetOnSpawn = false;
+
+-- Types
+
+type ThemeConfig = {
+	BorderColor: Color3?;
+	BorderThickness: number?;
+	BorderTransparency: number?;
+	BackgroundColor: Color3?;
+	BackgroundTransparency: number?;
+	SongNameColor: Color3?;
+	SongNameFont: Font?;
+	ArtistNameColor: Color3?;
+	ArtistNameFont: Font?;
+	BarBackgroundColor: Color3?;
+	BarColor: Color3?;
+};
+
+type OverlayConfig = {
+	DiscordID: string?;
+	Mode: string?;
+	UIConfig: ThemeConfig?;
+};
+
+type Overlay = {
+    DiscordID: string;
+    Mode: string;
+    UIConfig: ThemeConfig;
+    SetDiscordID: (self: Overlay, Value: string) -> ();
+    SetMode: (self: Overlay, Value: string) -> ();
+    SetTheme: (self: Overlay, Value: ThemeConfig) -> ();
+    ForceUpdateTheme: (self: Overlay) -> ();
+    Destroy: (self: Overlay) -> ();
+};
+
+-- Functions
+
+function Functions:Draggable(Instance: Instance): ()
+	Instance.Active = true;
+	local MoveConnection = nil;
+	local EndConnection = nil;
+	Instance.InputBegan.Connect(Instance.InputBegan, function(Input: InputObject)
+		if (Input.UserInputType ~= Enum.UserInputType.MouseButton1 and Input.UserInputType ~= Enum.UserInputType.Touch) then return; end
+		local ObjectPosition = Vector2.new(Mouse.X - Instance.AbsolutePosition.X, Mouse.Y - Instance.AbsolutePosition.Y);
+		if (MoveConnection ~= nil) then MoveConnection:Disconnect(); MoveConnection = nil; end
+		if (EndConnection ~= nil) then EndConnection:Disconnect(); EndConnection = nil; end
+		MoveConnection = UserInputService.InputChanged.Connect(UserInputService.InputChanged, function(Input: InputObject)
+			if (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
+				Instance.Position = UDim2.fromOffset(Mouse.X - ObjectPosition.X + (Instance.Size.X.Offset * Instance.AnchorPoint.X), Mouse.Y - ObjectPosition.Y + (Instance.Size.Y.Offset * Instance.AnchorPoint.Y));
+			end
+		end)
+		EndConnection = UserInputService.InputEnded.Connect(UserInputService.InputEnded, function(Input: InputObject)
+			if (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
+				if (MoveConnection ~= nil) then MoveConnection:Disconnect(); MoveConnection = nil; end
+				if (EndConnection ~= nil) then EndConnection:Disconnect(); EndConnection = nil; end
+			end
+		end)
+	end)
 end
 
-if getgenv().SpotifyOverlayRunning then
-    return
+function Functions:CreateInstance(ClassName: string, PropertyTable: { [string]: any }): string | Instance
+	local NewInstance = ClassName;
+	if (type(ClassName) == "string") then
+		NewInstance = Instance.new(ClassName);
+	end
+	for Index, Value in pairs(PropertyTable) do
+		NewInstance[Index] = Value;
+	end
+	return NewInstance;
 end
 
-getgenv().SpotifyOverlayRunning = true
-
-local Config = getgenv().SpotifyOverlay
-local UIConfig = Config.UI
-local GetHiddenUI = get_hidden_gui or gethui
-local CloneReference = cloneref or function(Ins) return Ins end
-
-local DragToggle = nil
-local DragStart = nil
-local StartPos = nil
-local Connections = {}
-
-local UserInputService = CloneReference(game:GetService("UserInputService"))
-local TweenService = CloneReference(game:GetService("TweenService"))
-local HttpService = CloneReference(game:GetService("HttpService"))
-local CoreGui = CloneReference(game:GetService("CoreGui"))
-
-local OverlayGui = Instance.new("ScreenGui")
-OverlayGui.Parent = GetHiddenUI() or CoreGui
-OverlayGui.Enabled = true
-OverlayGui.ResetOnSpawn = false
-OverlayGui.IgnoreGuiInset = false
-
-local Background = Instance.new("Frame")
-Background.Parent = OverlayGui
-Background.Visible = true
-Background.Active = true
-Background.BorderSizePixel = 0
-Background.BackgroundTransparency = 0.5
-Background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-Background.Size = UDim2.fromScale(0.209, 0.093)
-Background.Position = UDim2.fromScale(0.006, 0.011)
-
-local BackgroundCorner = Instance.new("UICorner")
-BackgroundCorner.Parent = Background
-BackgroundCorner.CornerRadius = UDim.new(0, 8)
-
-local BackgroundBorder = Instance.new("UIStroke")
-BackgroundBorder.Parent = Background
-BackgroundBorder.Color = Color3.fromRGB(0, 0, 0)
-BackgroundBorder.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-BackgroundBorder.Thickness = 2
-
-local SongImage = Instance.new("ImageLabel")
-SongImage.Parent = Background
-SongImage.Position = UDim2.new(0.0175, 0, 0.05, 0)
-SongImage.Size = UDim2.new(0.225, 0, 0.9, 0)
-SongImage.BackgroundTransparency = 1
-SongImage.BorderSizePixel = 0
-SongImage.Image = ""
-
-local ImageCorner = Instance.new("UICorner")
-ImageCorner.Parent = SongImage
-ImageCorner.CornerRadius = UDim.new(0, 8)
-
-local SongName = Instance.new("TextLabel")
-SongName.Parent = Background
-SongName.BackgroundTransparency = 1
-SongName.ClipsDescendants = true
-SongName.BorderSizePixel = 0
-SongName.Text = "SongName"
-SongName.Size = UDim2.new(0.715, 0, 0.32, 0)
-SongName.Position = UDim2.new(0.26, 0, 0.12, 0)
-SongName.TextSize = 25
-SongName.TextColor3 = Color3.fromRGB(255, 255, 255)
-SongName.FontFace = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-
-local SongNameTextScaler = Instance.new("UITextSizeConstraint")
-SongNameTextScaler.Parent = SongName
-SongNameTextScaler.MaxTextSize = 25
-
-local ArtistName = Instance.new("TextLabel")
-ArtistName.Parent = Background
-ArtistName.BackgroundTransparency = 1
-ArtistName.ClipsDescendants = true
-ArtistName.BorderSizePixel = 0
-ArtistName.Text = "SongName"
-ArtistName.Size = UDim2.new(0.715, 0, 0.32, 0)
-ArtistName.Position = UDim2.new(0.26, 0, 0.35, 0)
-ArtistName.TextSize = 18
-ArtistName.TextColor3 = Color3.fromRGB(255, 255, 255)
-ArtistName.FontFace = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
-
-local ArtistNameTextScaler = Instance.new("UITextSizeConstraint")
-ArtistNameTextScaler.Parent = ArtistName
-ArtistNameTextScaler.MaxTextSize = 18
-
-local BarBackground = Instance.new("CanvasGroup")
-BarBackground.Parent = Background
-BarBackground.BorderSizePixel = 0
-BarBackground.BackgroundColor3 = Color3.fromRGB(128, 128, 128)
-BarBackground.Size = UDim2.new(0.715, 0, 0.15, 0)
-BarBackground.Position = UDim2.new(0.26, 0, 0.73, 0)
-
-local BarBackgroundCorner = Instance.new("UICorner")
-BarBackgroundCorner.Parent = BarBackground
-BarBackgroundCorner.CornerRadius = UDim.new(0, 8)
-
-local Bar = Instance.new("Frame")
-Bar.Parent = BarBackground
-Bar.BorderSizePixel = 0
-Bar.Size = UDim2.new(0, 0, 1, 0)
-Bar.Position = UDim2.new(0, 0, 0, 0)
-Bar.BackgroundColor3 = Color3.fromRGB(192, 192, 192)
-
-local BarCorner = Instance.new("UICorner")
-BarCorner.Parent = Bar
-BarCorner.CornerRadius = UDim.new(0, 8)
-
-function Config:End()
-    for _, v in next, Connections do
-        v:Disconnect()
-        v = nil
-    end
-    getgenv().SpotifyOverlayRunning = false
-    OverlayGui:Destroy()
-    getgenv().SpotifyOverlay = nil
+function SpotifyOverlay:Exit(): ()
+	GUI.Destroy(GUI);
+	SpotifyOverlay = nil;
 end
 
-function UpdateInput(Input)
-    local Delta = Input.Position - DragStart
-    local Pos = UDim2.new(StartPos.X.Scale, StartPos.X.Offset + Delta.X, StartPos.Y.Scale, StartPos.Y.Offset + Delta.Y)
-    TweenService:Create(Background, TweenInfo.new(0.1), { Position = Pos }):Play()
-end
-
-Connections.InputBegan = Background.InputBegan:Connect(function(Input)
-    if Input.UserInputType == (Enum.UserInputType.MouseButton1 or Enum.UserInputType.Touch) then
-        DragToggle = true
-        DragStart = Input.Position
-        StartPos = Background.Position
-        Connections.Changed = Input.Changed:Connect(function()
-            if Input.UserInputState == Enum.UserInputState.End then
-                DragToggle = false
-            end
+function SpotifyOverlay:CreateOverlay(ConfigTable: OverlayConfig): Overlay
+	ConfigTable = ConfigTable or {};
+	local Overlay: Overlay = {
+		DiscordID = ConfigTable.DiscordID or "0";
+		Mode = ConfigTable.Mode or "HttpGet";
+		UIConfig = ConfigTable.UIConfig or SpotifyOverlay.DefaultTheme;
+	} :: any;
+	for Index, Value in SpotifyOverlay.DefaultTheme do
+		if (Overlay.UIConfig[Index] == nil) then
+			Overlay.UIConfig[Index] = Value;
+		end
+	end
+	local AlbumURL = "";
+	local GetConnection = nil;
+	local OverlayHolder = Functions:CreateInstance("Frame", {
+		Name = "Holder";
+		Position = UDim2.fromOffset(16, 6);
+		Size = UDim2.fromOffset(350, 90);
+		BackgroundColor3 = Overlay.UIConfig.BackgroundColor;
+		BackgroundTransparency = Overlay.UIConfig.BackgroundTransparency;
+		BorderSizePixel = 0;
+		Parent = GUI; 
+	});
+	Functions:Draggable(OverlayHolder);
+	Functions:CreateInstance("UIPadding", {
+		PaddingLeft = UDim.new(0, 5);
+		PaddingBottom = UDim.new(0, 5);
+		PaddingTop = UDim.new(0, 5);
+		PaddingRight = UDim.new(0, 5);
+		Parent = OverlayHolder;
+	});
+	Functions:CreateInstance("UICorner", {
+		CornerRadius = UDim.new(0, 8);
+		Parent = OverlayHolder;
+	});
+	local BackgroundBorder = Functions:CreateInstance("UIStroke", {
+		Color = Overlay.UIConfig.BorderColor;
+		Thickness = Overlay.UIConfig.BorderThickness;
+		ApplyStrokeMode = Enum.ApplyStrokeMode.Border;
+		Parent = OverlayHolder;
+	});
+	local SongImage = Functions:CreateInstance("ImageLabel", {
+		AnchorPoint = Vector2.new(0, 0.5);
+		Position = UDim2.fromScale(0, 0.5);
+		Size = UDim2.fromScale(1, 1);
+		BackgroundTransparency = 1;
+		Image = "";
+		Parent = OverlayHolder;
+	});
+	Functions:CreateInstance("UIAspectRatioConstraint", {
+		DominantAxis = Enum.DominantAxis.Height;
+		Parent = SongImage;
+	})
+	Functions:CreateInstance("UICorner", {
+		CornerRadius = UDim.new(0, 8);
+		Parent = SongImage;
+	});
+	local InfoHolder = Functions:CreateInstance("Frame", {
+		Name = "Info";
+		AnchorPoint = Vector2.new(1, 0.5);
+		Position = UDim2.fromScale(1, 0.5);
+		Size = UDim2.new(0, 245, 1, 0);
+		BackgroundTransparency = 1;
+		Parent = OverlayHolder;
+	});
+	Functions:CreateInstance("UIListLayout", {
+		Padding = UDim.new(0, 5);
+		FillDirection = Enum.FillDirection.Vertical;
+		SortOrder = Enum.SortOrder.LayoutOrder;
+		Parent = InfoHolder;
+	});
+	local SongNameText = Functions:CreateInstance("TextLabel", {
+		Name = "SongName";
+		Size = UDim2.new(1, 0, 0, 25);
+		BackgroundTransparency = 1;
+		FontFace = Overlay.UIConfig.SongNameFont;
+		Text = "SongName";
+		TextColor3 = Overlay.UIConfig.SongNameColor;
+		TextSize = 25;
+		TextXAlignment = Enum.TextXAlignment.Left;
+		TextYAlignment = Enum.TextYAlignment.Center;
+		Parent = InfoHolder;
+	});
+	local SongArtistText = Functions:CreateInstance("TextLabel", {
+		Name = "ArtistName";
+		Size = UDim2.new(1, 0, 0, 25);
+		BackgroundTransparency = 1;
+		FontFace = Overlay.UIConfig.ArtistNameFont;
+		Text = "ArtistName";
+		TextColor3 = Overlay.UIConfig.ArtistNameColor;
+		TextSize = 25;
+		TextXAlignment = Enum.TextXAlignment.Left;
+		TextYAlignment = Enum.TextYAlignment.Center;
+		Parent = InfoHolder;
+	});
+	local BarFrame = Functions:CreateInstance("Frame", {
+		Name = "ProgressBar";
+		Size = UDim2.new(1, 0, 0, 20);
+		BackgroundColor3 = Overlay.UIConfig.BarBackgroundColor;
+		BorderSizePixel = 0;
+        ClipsDescendants = true;
+		Parent = InfoHolder;
+	});
+	Functions:CreateInstance("UICorner", {
+		CornerRadius = UDim.new(1, 0);
+		Parent = BarFrame;
+	});
+	local Bar = Functions:CreateInstance("Frame", {
+		Name = "Bar";
+		Size = UDim2.fromScale(0, 1);
+		BackgroundColor3 = Overlay.UIConfig.BarColor;
+		BorderSizePixel = 0;
+		Parent = BarFrame;
+	});
+	Functions:CreateInstance("UICorner", {
+		CornerRadius = UDim.new(1, 0);
+		Parent = Bar;
+	});
+	local function UpdateOverlay(Data: { [string]: any }): ()
+		SongNameText.Text = Data.song;
+		SongArtistText.Text = Data.artist;
+        local Success = pcall(function() -- Some executors doesn't support getcustomasset even though they have the function which breaks this completely.
+		    if (getgenv().writefile and getgenv().getcustomasset and Data.album_art_url ~= AlbumURL) then
+		    	AlbumURL = Data.album_art_url;
+		    	local ImageData = game:HttpGet(Data.album_art_url);
+		    	local ImageFile = getgenv().writefile("SpotifyOverlay.png", ImageData);
+		    	local Image = getgenv().getcustomasset("SpotifyOverlay.png");
+		    	task.delay(1, function()
+		    		SongImage.Image = Image;
+		    	end)
+		    end
         end)
-    end
-end)
-
-Connections.InputChanged = UserInputService.InputChanged:Connect(function(Input)
-    if Input.UserInputType == (Enum.UserInputType.MouseMovement or Enum.UserInputType.Touch) then
-        if DragToggle then
-            UpdateInput(Input)
+        if (not Success) then
+            SongImage.Image = "";
         end
-    end
-end)
-
-task.spawn(function()
-    while task.wait(1) do
-        if getgenv().SpotifyOverlayRunning and getgenv().SpotifyOverlay then
-            if Config.Enabled and Config.DiscordID then
-                if UIConfig then
-                    if UIConfig.BackgroundTransparency then Background.BackgroundTransparency = UIConfig.BackgroundTransparency end
-                    if UIConfig.BackgroundColor then Background.BackgroundColor3 = UIConfig.BackgroundColor end
-                    if UIConfig.BorderThickness then BackgroundBorder.Thickness = UIConfig.BorderThickness end
-                    if UIConfig.SongNameColor then SongName.TextColor3 = UIConfig.SongNameColor end
-                    if UIConfig.SongNameFont then SongName.FontFace = UIConfig.SongNameFont end
-                    if UIConfig.ArtistNameColor then ArtistName.TextColor3 = UIConfig.ArtistNameColor end
-                    if UIConfig.ArtistNameFont then ArtistName.FontFace = UIConfig.ArtistNameFont end
-                    if UIConfig.BarBackgroundColor then BarBackground.BackgroundColor3 = UIConfig.BarBackgroundColor end
-                    if UIConfig.BarColor then Bar.BackgroundColor3 = UIConfig.BarColor end
-                end
-                local success, data = pcall(function()
-                    local get = game:HttpGet("https://api.lanyard.rest/v1/users/"..Config.DiscordID)
-                    return HttpService:JSONDecode(get)
-                end)
-                if type(data) == "table" and data.success and data.data and data.data.listening_to_spotify and data.data.spotify then
-                    local SpotifyResult = data.data.spotify
-                    SongName.Text = SpotifyResult.song
-                    ArtistName.Text = SpotifyResult.artist
-                    if writefile and getcustomasset then
-                        local ImageURL = game:HttpGet(SpotifyResult.album_art_url)
-                        local Image = writefile("SpotifyOverlay", ImageURL)
-                        local ImageAsset = getcustomasset("SpotifyOverlay")
-                        task.spawn(function()
-                            task.wait(1)
-                            SongImage.Image = ImageAsset
-                        end)
-                    else
-                        SongImage.Image = "rbxassetid://78980954752956"
+		local Timestamps = { Beginning = Data.timestamps["start"]; Ending = Data.timestamps["end"]; };
+		local Total = Timestamps.Ending - Timestamps.Beginning;
+		local Progress = (DateTime.now().UnixTimestampMillis - Timestamps.Beginning) / Total;
+		local CalculatedValue = math.clamp(Progress, 0, 1);
+		local Tween = TweenService.Create(TweenService, Bar, TweenInfo.new(0.5), { Size = UDim2.fromScale(CalculatedValue, 1) });
+		Tween.Play(Tween);
+	end
+	local function OnModeChange(Mode: string): ()
+		if (Mode == "HttpGet") then
+			if (GetConnection ~= nil) then GetConnection.Close(GetConnection); GetConnection = nil; end
+			GetConnection = task.spawn(function()
+				while (SpotifyOverlay.Enabled) do
+					local Success, Data = pcall(function()
+						local RawData = game:HttpGet("https://api.lanyard.rest/v1/users/"..Overlay.DiscordID);
+						return HttpService.JSONDecode(HttpService, RawData);
+					end)
+					if (type(Data) == "table" and Data.success and Data.data and Data.data.listening_to_spotify and Data.data.spotify) then
+						UpdateOverlay(Data.data.spotify);
+					end
+					task.wait(1);
+				end
+			end)
+		elseif (Mode == "Websocket") then
+			if (GetConnection ~= nil) then task.cancel(GetConnection); GetConnection = nil; end
+			GetConnection = Websocket.connect(`wss://api.lanyard.rest/socket`);
+			GetConnection.OnMessage.Connect(GetConnection.OnMessage, function(RawMessage)
+                local Success, Data = pcall(function() return HttpService.JSONDecode(HttpService, RawMessage); end)
+                if (not Success) then return; end
+                if (Data.op == 1) then
+                    local HeartbeatInterval = (Data.d.heartbeat_interval or 30000) / 1000;
+                    task.spawn(function()
+                        while (GetConnection) do
+                            task.wait(HeartbeatInterval);
+                            if (not GetConnection) then break; end
+                            pcall(function()
+                                GetConnection.Send(GetConnection, HttpService.JSONEncode(HttpService, { op = 3 }));
+                            end)
+                        end
+                    end)
+                    local InitializePayload = HttpService.JSONEncode(HttpService, {
+                        op = 2;
+                        d = {
+                            subscribe_to_id = Overlay.DiscordID;
+                        };
+                    });
+                    GetConnection.Send(GetConnection, InitializePayload);
+                elseif (Data.op == 0) then
+                    local EventData = Data.d;
+                    if (type(EventData) == "table" and EventData.listening_to_spotify and EventData.spotify) then
+                        UpdateOverlay(EventData.spotify);
                     end
-                    local timestamps = {
-                        start = SpotifyResult.timestamps["start"],
-                        ["end"] = SpotifyResult.timestamps["end"]
-                    }
-                    local total = timestamps["end"] - timestamps.start
-                    local progress = (DateTime.now().UnixTimestampMillis - timestamps.start) / total
-                    local result = math.clamp(progress, 0, 1)
-                    TweenService:Create(Bar, TweenInfo.new(0.5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), { Size = UDim2.fromScale(result, 1) }):Play()
-                elseif data.data and not data.data.listening_to_spotify and not data.data.spotify and Config.Debug then
-                    print("User is not listening to Spotify or Spotify activity is not visible on the profile")
-                elseif Config.Debug then
-                    print("API returned: ".. data)
                 end
-            end
-        else
-            break
-        end
-    end
-end)
+			end)
+		end
+	end
+    local function CleanupConnections()
+		if (GetConnection == nil) then return; end
+		if (Overlay.Mode == "Websocket") then
+			pcall(function() GetConnection.Close(GetConnection); end)
+		elseif (Overlay.Mode == "HttpGet") then
+			pcall(function() task.cancel(GetConnection); end)
+		end
+		GetConnection = nil;
+	end
+	function Overlay:SetDiscordID(Value: number): ()
+		Overlay.DiscordID = Value;
+	end
+	function Overlay:SetMode(Value: string): ()
+		if (Value ~= "Websocket" or Value ~= "HttpGet" and Overlay.Mode == Value) then return; end
+		Overlay.Mode = Value;
+        OnModeChange(Overlay.Mode);
+	end
+	function Overlay:SetTheme(Value: ThemeConfig): ()
+		Overlay.UIConfig = Value;
+		for Index, Value in SpotifyOverlay.DefaultTheme do
+			if (Overlay.UIConfig[Index] == nil) then
+				Overlay.UIConfig[Index] = Value;
+			end
+		end
+		Overlay:ForceUpdateTheme();
+	end
+	function Overlay:ForceUpdateTheme(): ()
+		OverlayHolder.BackgroundColor3 = Overlay.UIConfig.BackgroundColor;
+		OverlayHolder.BackgroundTransparency = Overlay.UIConfig.BackgroundTransparency;
+		BackgroundBorder.Color = Overlay.UIConfig.BorderColor;
+		BackgroundBorder.Thickness = Overlay.UIConfig.BorderThickness;
+		SongNameText.TextColor3 = Overlay.UIConfig.SongNameColor;
+		SongNameText.FontFace = Overlay.UIConfig.SongNameFont;
+		SongArtistText.TextColor3 = Overlay.UIConfig.ArtistNameColor;
+		SongArtistText.FontFace = Overlay.UIConfig.ArtistNameFont;
+		BarFrame.BackgroundColor3 = Overlay.UIConfig.BarBackgroundColor;
+		Bar.BackgroundColor3 = Overlay.UIConfig.BarColor;
+	end
+	function Overlay:Destroy(): ()
+        CleanupConnections();
+        GetConnection = nil;
+		OverlayHolder.Destroy(OverlayHolder);
+		Overlay = nil;
+	end
+    OverlayHolder.Destroying.Connect(OverlayHolder.Destroying, function()
+        CleanupConnections();
+        GetConnection = nil;
+        Overlay = nil;
+    end)
+	OnModeChange(Overlay.Mode);
+	return Overlay;
+end
+
+return SpotifyOverlay;
