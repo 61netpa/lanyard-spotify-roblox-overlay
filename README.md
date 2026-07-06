@@ -14,7 +14,7 @@ local Overlay = SpotifyOverlay:CreateOverlay({
 ```
 ## CreateOverlay Configuration
 
-`SpotifyOverlay:CreateOverlay(config)` accepts a table with the following fields:
+`SpotifyOverlay:CreateOverlay(Config)` accepts a table with the following fields:
  
 | Field | Type | Default | Description |
 |---|---|---|---|
